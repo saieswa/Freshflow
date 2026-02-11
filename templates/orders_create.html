@@ -1,0 +1,6 @@
+<select name="category" required>
+    <option value="">Select category</option>
+    {% for category in categories %}
+        <option value="{{ category }}">{{ category }}</option>
+    {% endfor %}
+</select>

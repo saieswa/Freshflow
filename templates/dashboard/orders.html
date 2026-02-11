@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders - FreshFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-leaf"></i>
+                    <span>FreshFlow</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="{{ url_for('dashboard') }}" class="nav-link">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('inventory') }}" class="nav-link">
+                            <i class="fas fa-boxes"></i>
+                            <span>Inventory</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('expiry_alerts') }}" class="nav-link">
+                            <i class="fas fa-bell"></i>
+                            <span>Expiry Alerts</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('analytics') }}" class="nav-link">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Analytics</span>
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="{{ url_for('orders') }}" class="nav-link">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Orders</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('donations') }}" class="nav-link">
+                            <i class="fas fa-heart"></i>
+                            <span>Donations</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('settings') }}" class="nav-link">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-details">
+                        <span class="user-name">{{ session.username }}</span>
+                        <span class="user-role">Admin</span>
+                    </div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Navigation -->
+            <header class="top-nav">
+                <div class="nav-left">
+                    <button class="sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Orders & Reorders</h1>
+                </div>
+                <div class="nav-right">
+                    <a class="btn-primary" href="{{ url_for('create_order') }}">
+                        <i class="fas fa-plus"></i>
+                        Create Order
+                    </a>
+                </div>
+            </header>
+
+            <!-- Orders Content -->
+            <div class="dashboard-content">
+                <!-- Reorder Suggestions -->
+                <div class="reorder-card">
+                    <div class="card-header">
+                        <h3>Reorder Suggestions</h3>
+                        <span class="suggestion-count">{{ low_stock_items|length }} items need reordering</span>
+                    </div>
+                    <div class="card-content">
+                        {% if low_stock_items %}
+                        <div class="reorder-items">
+                            {% for item in low_stock_items %}
+                            <div class="reorder-item">
+                                <div class="item-info">
+                                    <h4>{{ item.name }}</h4>
+                                    <span class="item-category">{{ item.category }}</span>
+                                </div>
+                                <div class="item-stats">
+                                    <div class="stat">
+                                        <span class="stat-label">Current Stock</span>
+                                        <span class="stat-value critical">{{ item.quantity }}</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-label">Suggested Qty</span>
+                                        <span class="stat-value">{{ item.quantity * 3 }}</span>
+                                    </div>
+                                </div>
+                                <div class="item-actions">
+                                    <button class="btn-primary" onclick="addToOrder('{{ item._id }}')">
+                                        <i class="fas fa-plus"></i>
+                                        Add to Order
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-check-circle"></i>
+                            <h3>All Stock Levels Good</h3>
+                            <p>No items currently need reordering</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Recent Orders -->
+                <div class="orders-card">
+                    <div class="card-header">
+                        <h3>Recent Orders</h3>
+                        <a href="#" class="btn-link">View All Orders</a>
+                    </div>
+                    <div class="card-content">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Supplier</th>
+                                        <th>Items</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in recent_orders %}
+                                    <tr>
+                                        <td>{{ order.id }}</td>
+                                        <td>{{ order.supplier }}</td>
+                                        <td>{{ order.items }}</td>
+                                        <td>₹{{ "%.2f"|format(order.total) }}</td>
+                                        <td>
+                                            <span class="status-badge 
+                                                {% if order.status == 'Delivered' %}success
+                                                {% elif order.status == 'Pending' %}warning
+                                                {% else %}info{% endif %}">
+                                                {{ order.status }}
+                                            </span>
+                                        </td>
+                                        <td>{{ order.date }}</td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn-icon" onclick="viewOrder('{{ order.id }}')" title="View">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn-icon" onclick="editOrder('{{ order.id }}')" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Statistics -->
+                <div class="order-stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">12</div>
+                            <div class="stat-label">Orders This Month</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                +3 from last month
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">₹15,420</div>
+                            <div class="stat-label">Total Spent</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                +12% from last month
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">2.3 days</div>
+                            <div class="stat-label">Avg Delivery Time</div>
+                            <div class="stat-change negative">
+                                <i class="fas fa-arrow-down"></i>
+                                -0.5 days improvement
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">95%</div>
+                            <div class="stat-label">On-Time Delivery</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                +2% improvement
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script>
+        function createOrder() {
+            // In a real app, this would open an order creation modal
+            alert('Create order functionality would be implemented here');
+        }
+
+        function addToOrder(itemId) {
+            // In a real app, this would add the item to a pending order
+            alert(`Add item ${itemId} to order functionality would be implemented here`);
+        }
+
+        function viewOrder(orderId) {
+            // In a real app, this would show order details
+            alert(`View order ${orderId} functionality would be implemented here`);
+        }
+
+        function editOrder(orderId) {
+            // In a real app, this would open order editing
+            alert(`Edit order ${orderId} functionality would be implemented here`);
+        }
+    </script>
+
+    <style>
+        .reorder-card {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .suggestion-count {
+            background: var(--alert-orange);
+            color: var(--white);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .reorder-items {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .reorder-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 8px;
+            border-left: 4px solid var(--alert-orange);
+        }
+
+        .item-info h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .item-category {
+            background: var(--white);
+            color: var(--text-light);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .item-stats {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .stat-value.critical {
+            color: #e74c3c;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .orders-card {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .order-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .status-badge.success {
+            background-color: rgba(39, 174, 96, 0.1);
+            color: var(--fresh-green);
+        }
+
+        .status-badge.warning {
+            background-color: rgba(230, 126, 34, 0.1);
+            color: var(--alert-orange);
+        }
+
+        .status-badge.info {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--calm-blue);
+        }
+
+        @media (max-width: 768px) {
+            .reorder-item {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .item-stats {
+                gap: 1rem;
+            }
+
+            .order-stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</body>
+</html>

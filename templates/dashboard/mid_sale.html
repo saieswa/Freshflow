@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mid Sales Discount - FreshFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-leaf"></i>
+                    <span>FreshFlow</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="{{ url_for('dashboard') }}" class="nav-link">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('inventory') }}" class="nav-link">
+                            <i class="fas fa-boxes"></i>
+                            <span>Inventory</span>
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="{{ url_for('expiry_alerts') }}" class="nav-link">
+                            <i class="fas fa-bell"></i>
+                            <span>Expiry Alerts</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('analytics') }}" class="nav-link">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Analytics</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('orders') }}" class="nav-link">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Orders</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('donations') }}" class="nav-link">
+                            <i class="fas fa-heart"></i>
+                            <span>Donations</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('settings') }}" class="nav-link">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-details">
+                        <span class="user-name">{{ session.username }}</span>
+                        <span class="user-role">Admin</span>
+                    </div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Navigation -->
+            <header class="top-nav">
+                <div class="nav-left">
+                    <button class="sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Mid Sales Discount</h1>
+                </div>
+                <div class="nav-right">
+                    <a href="{{ url_for('expiry_alerts') }}" class="btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Alerts
+                    </a>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="dashboard-content">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}" style="margin-bottom: 1.5rem; padding: 1rem; border-radius: 8px; background: {% if category == 'success' %}rgba(39, 174, 96, 0.1){% else %}rgba(231, 76, 60, 0.1){% endif %}; color: {% if category == 'success' %}#27ae60{% else %}#e74c3c{% endif %}; border-left: 4px solid {% if category == 'success' %}#27ae60{% else %}#e74c3c{% endif %};">
+                                <i class="fas fa-{% if category == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Item Information Card -->
+                <div class="table-card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h3>Item Information</h3>
+                    </div>
+                    <div class="card-content">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                            <div>
+                                <label style="display: block; font-size: 0.9rem; color: var(--text-light); margin-bottom: 0.5rem;">Item Name</label>
+                                <div style="font-size: 1.1rem; font-weight: 600; color: var(--text-dark);">{{ item.name }}</div>
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.9rem; color: var(--text-light); margin-bottom: 0.5rem;">Category</label>
+                                <div style="font-size: 1.1rem; font-weight: 500; color: var(--text-dark);">{{ item.category }}</div>
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.9rem; color: var(--text-light); margin-bottom: 0.5rem;">Available Quantity</label>
+                                <div style="font-size: 1.1rem; font-weight: 600; color: #e67e22;">{{ item.quantity }} units</div>
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.9rem; color: var(--text-light); margin-bottom: 0.5rem;">Current Cost</label>
+                                <div style="font-size: 1.1rem; font-weight: 600; color: var(--text-dark);">₹{{ "%.2f"|format(item.cost or 0) }}</div>
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.9rem; color: var(--text-light); margin-bottom: 0.5rem;">Expiry Date</label>
+                                <div style="font-size: 1.1rem; font-weight: 500; color: #e74c3c;">{{ item.expiry_date }}</div>
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.9rem; color: var(--text-light); margin-bottom: 0.5rem;">Supplier</label>
+                                <div style="font-size: 1.1rem; font-weight: 500; color: var(--text-dark);">{{ item.supplier or 'N/A' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Discount Form Card -->
+                <div class="table-card">
+                    <div class="card-header">
+                        <h3>Apply Mid Sales Discount</h3>
+                    </div>
+                    <div class="card-content">
+                        <form method="POST" action="{{ url_for('mid_sale', item_id=item._id) }}">
+                            <input type="hidden" name="item_id" value="{{ item._id }}">
+                            
+                            <div style="display: grid; gap: 1.5rem;">
+                                <!-- Discount Percentage -->
+                                <div>
+                                    <label for="discount_percentage" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-dark);">
+                                        Discount Percentage (%)
+                                    </label>
+                                    <input type="number" 
+                                           id="discount_percentage" 
+                                           name="discount_percentage" 
+                                           min="0" 
+                                           max="100" 
+                                           step="0.01"
+                                           required
+                                           onchange="calculateDiscountedPrice()"
+                                           style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;">
+                                    <small style="color: var(--text-light); font-size: 0.85rem;">Enter discount percentage (0-100%)</small>
+                                </div>
+
+                                <!-- Discounted Price -->
+                                <div>
+                                    <label for="discounted_price" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-dark);">
+                                        Discounted Price (₹)
+                                    </label>
+                                    <input type="number" 
+                                           id="discounted_price" 
+                                           name="discounted_price" 
+                                           min="0" 
+                                           step="0.01"
+                                           required
+                                           style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;">
+                                    <small style="color: var(--text-light); font-size: 0.85rem;">Final price after discount</small>
+                                </div>
+
+                                <!-- Sale Quantity -->
+                                <div>
+                                    <label for="sale_quantity" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-dark);">
+                                        Sale Quantity
+                                    </label>
+                                    <input type="number" 
+                                           id="sale_quantity" 
+                                           name="sale_quantity" 
+                                           min="1" 
+                                           max="{{ item.quantity }}" 
+                                           required
+                                           style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;">
+                                    <small style="color: var(--text-light); font-size: 0.85rem;">Maximum: {{ item.quantity }} units</small>
+                                </div>
+
+                                <!-- Sale Date -->
+                                <div>
+                                    <label for="sale_date" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-dark);">
+                                        Sale Date
+                                    </label>
+                                    <input type="date" 
+                                           id="sale_date" 
+                                           name="sale_date" 
+                                           value="{{ today }}"
+                                           required
+                                           style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem;">
+                                </div>
+
+                                <!-- Notes -->
+                                <div>
+                                    <label for="notes" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-dark);">
+                                        Notes (Optional)
+                                    </label>
+                                    <textarea id="notes" 
+                                              name="notes" 
+                                              rows="4"
+                                              placeholder="Add any additional notes about this discount sale..."
+                                              style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem; resize: vertical; font-family: inherit;"></textarea>
+                                </div>
+
+                                <!-- Summary -->
+                                <div style="background: var(--light-gray); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                                    <h4 style="margin-bottom: 1rem; color: var(--text-dark);">Sale Summary</h4>
+                                    <div style="display: grid; gap: 0.75rem;">
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span style="color: var(--text-light);">Original Price:</span>
+                                            <span id="original_price_display" style="font-weight: 600;">₹{{ "%.2f"|format(item.cost or 0) }}</span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span style="color: var(--text-light);">Discount:</span>
+                                            <span id="discount_display" style="font-weight: 600; color: #9b59b6;">0%</span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span style="color: var(--text-light);">Discounted Price:</span>
+                                            <span id="discounted_price_display" style="font-weight: 600; color: var(--fresh-green);">₹0.00</span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span style="color: var(--text-light);">Quantity:</span>
+                                            <span id="quantity_display" style="font-weight: 600;">0 units</span>
+                                        </div>
+                                        <hr style="border: none; border-top: 1px solid var(--border-color); margin: 0.5rem 0;">
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span style="font-weight: 600; font-size: 1.1rem; color: var(--text-dark);">Total Revenue:</span>
+                                            <span id="total_revenue_display" style="font-weight: 700; font-size: 1.2rem; color: var(--fresh-green);">₹0.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
+                                    <a href="{{ url_for('expiry_alerts') }}" class="btn-secondary" style="text-decoration: none;">
+                                        Cancel
+                                    </a>
+                                    <button type="submit" class="btn-primary" style="background-color: #9b59b6;">
+                                        <i class="fas fa-tag"></i>
+                                        Apply Discount Sale
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const originalPrice = {{ item.cost or 0 }};
+        
+        function calculateDiscountedPrice() {
+            const discountPercent = parseFloat(document.getElementById('discount_percentage').value) || 0;
+            const saleQuantity = parseFloat(document.getElementById('sale_quantity').value) || 0;
+            
+            // Calculate discounted price
+            const discountAmount = (originalPrice * discountPercent) / 100;
+            const discountedPrice = originalPrice - discountAmount;
+            
+            // Update discounted price field
+            document.getElementById('discounted_price').value = discountedPrice.toFixed(2);
+            
+            // Update summary display
+            document.getElementById('discount_display').textContent = discountPercent + '%';
+            document.getElementById('discounted_price_display').textContent = '₹' + discountedPrice.toFixed(2);
+            document.getElementById('quantity_display').textContent = saleQuantity + ' units';
+            
+            // Calculate total revenue
+            const totalRevenue = discountedPrice * saleQuantity;
+            document.getElementById('total_revenue_display').textContent = '₹' + totalRevenue.toFixed(2);
+        }
+        
+        // Auto-calculate when quantity changes
+        document.getElementById('sale_quantity').addEventListener('input', calculateDiscountedPrice);
+        document.getElementById('discount_percentage').addEventListener('input', calculateDiscountedPrice);
+        
+        // Initialize calculation
+        calculateDiscountedPrice();
+    </script>
+</body>
+</html>
+

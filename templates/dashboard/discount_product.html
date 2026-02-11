@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discount Product - FreshFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-leaf"></i>
+                    <span>FreshFlow</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('inventory') }}"><i class="fas fa-boxes"></i><span>Inventory</span></a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('expiry_alerts') }}"><i class="fas fa-bell"></i><span>Expiry Alerts</span></a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar"><i class="fas fa-user"></i></div>
+                    <div class="user-details">
+                        <span class="user-name">{{ session.username }}</span>
+                        <span class="user-role">Admin</span>
+                    </div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="logout-btn"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-nav">
+                <div class="nav-left">
+                    <button class="sidebar-toggle"><i class="fas fa-bars"></i></button>
+                    <h1 class="page-title">Discount Products</h1>
+                </div>
+                <div class="nav-right">
+                    <a href="{{ url_for('dashboard') }}" class="btn-secondary"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+                </div>
+            </header>
+
+            <div class="dashboard-content">
+                <div class="table-card">
+                    <div class="card-header">
+                        <h3>Currently Available Discounts</h3>
+                    </div>
+                    <div class="card-content">
+                        {% if items %}
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Category</th>
+                                        <th>Original Price</th>
+                                        <th>Discount %</th>
+                                        <th>Discounted Price</th>
+                                        <th>Qty Available</th>
+                                        <th>Start Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for d in items %}
+                                    <tr>
+                                        <td>{{ d.name }}</td>
+                                        <td>{{ d.category }}</td>
+                                        <td>₹{{ '%.2f'|format(d.original_cost or 0) }}</td>
+                                        <td>{{ '%.2f'|format(d.discount_percentage or 0) }}%</td>
+                                        <td>₹{{ '%.2f'|format(d.discounted_price or 0) }}</td>
+                                        <td>{{ d.quantity_available }}</td>
+                                        <td>{{ d.start_date }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p style="color: var(--text-light);">No discount products available at the moment.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
+
+

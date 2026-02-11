@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Item - FreshFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-leaf"></i>
+                    <span>FreshFlow</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item"><a href="{{ url_for('dashboard') }}" class="nav-link"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
+                    <li class="nav-item active"><a href="{{ url_for('inventory') }}" class="nav-link"><i class="fas fa-boxes"></i><span>Inventory</span></a></li>
+                    <li class="nav-item"><a href="{{ url_for('expiry_alerts') }}" class="nav-link"><i class="fas fa-bell"></i><span>Expiry Alerts</span></a></li>
+                    <li class="nav-item"><a href="{{ url_for('analytics') }}" class="nav-link"><i class="fas fa-chart-line"></i><span>Analytics</span></a></li>
+                    <li class="nav-item"><a href="{{ url_for('orders') }}" class="nav-link"><i class="fas fa-shopping-cart"></i><span>Orders</span></a></li>
+                    <li class="nav-item"><a href="{{ url_for('donations') }}" class="nav-link"><i class="fas fa-heart"></i><span>Donations</span></a></li>
+                    <li class="nav-item"><a href="{{ url_for('settings') }}" class="nav-link"><i class="fas fa-cog"></i><span>Settings</span></a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar"><i class="fas fa-user"></i></div>
+                    <div class="user-details"><span class="user-name">{{ session.username }}</span><span class="user-role">Admin</span></div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="logout-btn"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-nav">
+                <div class="nav-left">
+                    <button class="sidebar-toggle"><i class="fas fa-bars"></i></button>
+                    <h1 class="page-title">Add Inventory Item</h1>
+                </div>
+                <div class="nav-right">
+                    <a href="{{ url_for('inventory') }}" class="btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+                </div>
+            </header>
+
+            <div class="dashboard-content">
+                <div class="settings-card">
+                    <div class="card-header">
+                        <h3>New Item Details</h3>
+                    </div>
+                    <div class="card-content">
+                        <form method="POST" action="{{ url_for('add_item') }}" class="form-grid">
+                            <div class="form-group">
+                                <label for="name">Item Name</label>
+                                <input type="text" id="name" name="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="category">Category</label>
+                                <select id="category" name="category" required>
+                                    <option value="">Select category</option>
+                                    {% for c in categories %}
+                                        <option value="{{ c }}">{{ c }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="quantity">Quantity</label>
+                                <input type="number" id="quantity" name="quantity" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="expiry_date">Expiry Date</label>
+                                <input type="date" id="expiry_date" name="expiry_date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="supplier">Supplier</label>
+                                <input type="text" id="supplier" name="supplier" placeholder="Optional">
+                            </div>
+                            <div class="form-group">
+                                <label for="cost">Cost</label>
+                                <input type="number" id="cost" name="cost" step="0.01" min="0" placeholder="0.00">
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Save Item</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
+

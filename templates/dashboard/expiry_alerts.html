@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expiry Alerts - FreshFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-leaf"></i>
+                    <span>FreshFlow</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="{{ url_for('dashboard') }}" class="nav-link">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('inventory') }}" class="nav-link">
+                            <i class="fas fa-boxes"></i>
+                            <span>Inventory</span>
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="{{ url_for('expiry_alerts') }}" class="nav-link">
+                            <i class="fas fa-bell"></i>
+                            <span>Expiry Alerts</span>
+                            <span class="badge">{{ expired|length + critical|length + warning|length }}</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('analytics') }}" class="nav-link">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Analytics</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('orders') }}" class="nav-link">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Orders</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('donations') }}" class="nav-link">
+                            <i class="fas fa-heart"></i>
+                            <span>Donations</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('settings') }}" class="nav-link">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-details">
+                        <span class="user-name">{{ session.username }}</span>
+                        <span class="user-role">Admin</span>
+                    </div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Navigation -->
+            <header class="top-nav">
+                <div class="nav-left">
+                    <button class="sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Expiry Alerts</h1>
+                </div>
+                <div class="nav-right">
+                    <div class="alert-summary">
+                        <div class="alert-count critical">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span>{{ expired|length + critical|length }}</span>
+                            <small>Critical</small>
+                        </div>
+                        <div class="alert-count warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>{{ warning|length }}</span>
+                            <small>Warning</small>
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="markAllAsRead()">
+                        <i class="fas fa-check"></i>
+                        Mark All Read
+                    </button>
+                </div>
+            </header>
+
+            <!-- Alerts Content -->
+            <div class="dashboard-content">
+                <!-- Expired Items -->
+                {% if expired %}
+                <div class="alert-section">
+                    <div class="alert-section-header">
+                        <div class="alert-section-title">
+                            <i class="fas fa-times-circle critical"></i>
+                            <h2>Expired Items ({{ expired|length }})</h2>
+                        </div>
+                        <div class="alert-section-actions">
+                            <button class="btn-danger" onclick="bulkAction('expired', 'donate')">
+                                <i class="fas fa-heart"></i>
+                                Donate All
+                            </button>
+                            <button class="btn-secondary" onclick="bulkAction('expired', 'delete')">
+                                <i class="fas fa-trash"></i>
+                                Remove All
+                            </button>
+                        </div>
+                    </div>
+                    <div class="alert-items">
+                        {% for item in expired %}
+                        <div class="alert-item expired">
+                            <div class="alert-item-header">
+                                <div class="alert-item-info">
+                                    <h3>{{ item.name }}</h3>
+                                    <span class="alert-category">{{ item.category }}</span>
+                                </div>
+                                <div class="alert-item-meta">
+                                    <span class="alert-quantity">{{ item.quantity }} units</span>
+                                    <span class="alert-expiry">Expired {{ item.expiry_date }}</span>
+                                </div>
+                            </div>
+                            <div class="alert-item-content">
+                                <div class="alert-item-details">
+                                    <div class="detail-item">
+                                        <i class="fas fa-box"></i>
+                                        <span>Quantity: {{ item.quantity }}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-calendar"></i>
+                                        <span>Expired: {{ item.expiry_date }}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-truck"></i>
+                                        <span>Supplier: {{ item.supplier or 'N/A' }}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-indian-rupee-sign"></i>
+                                        <span>Cost: ₹{{ "%.2f"|format(item.cost or 0) }}</span>
+                                    </div>
+                                </div>
+                                <div class="alert-item-actions">
+                                    <a href="{{ url_for('mid_sale', item_id=item._id) }}" class="btn-discount">
+                                        <i class="fas fa-tag"></i>
+                                        Mid Sales Discount
+                                    </a>
+                                    <button class="btn-warning" onclick="donateItem('{{ item._id }}')">
+                                        <i class="fas fa-heart"></i>
+                                        Donate
+                                    </button>
+                                    <button class="btn-danger" onclick="removeItem('{{ item._id }}')">
+                                        <i class="fas fa-trash"></i>
+                                        Remove
+                                    </button>
+                                    <button class="btn-secondary" onclick="viewItem('{{ item._id }}')">
+                                        <i class="fas fa-eye"></i>
+                                        View Details
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Critical Items (Expiring in 3 days) -->
+                {% if critical %}
+                <div class="alert-section">
+                    <div class="alert-section-header">
+                        <div class="alert-section-title">
+                            <i class="fas fa-exclamation-triangle critical"></i>
+                            <h2>Critical Alert - Expiring in 3 Days ({{ critical|length }})</h2>
+                        </div>
+                        <div class="alert-section-actions">
+                            <button class="btn-warning" onclick="bulkAction('critical', 'donate')">
+                                <i class="fas fa-heart"></i>
+                                Donate All
+                            </button>
+                            <button class="btn-primary" onclick="bulkAction('critical', 'reorder')">
+                                <i class="fas fa-shopping-cart"></i>
+                                Reorder All
+                            </button>
+                        </div>
+                    </div>
+                    <div class="alert-items">
+                        {% for item in critical %}
+                        <div class="alert-item critical">
+                            <div class="alert-item-header">
+                                <div class="alert-item-info">
+                                    <h3>{{ item.name }}</h3>
+                                    <span class="alert-category">{{ item.category }}</span>
+                                </div>
+                                <div class="alert-item-meta">
+                                    <span class="alert-quantity">{{ item.quantity }} units</span>
+                                    <span class="alert-expiry">Expires {{ item.expiry_date }}</span>
+                                </div>
+                            </div>
+                            <div class="alert-item-content">
+                                <div class="alert-item-details">
+                                    <div class="detail-item">
+                                        <i class="fas fa-box"></i>
+                                        <span>Quantity: {{ item.quantity }}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-calendar"></i>
+                                        <span>Expires: {{ item.expiry_date }}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-truck"></i>
+                                        <span>Supplier: {{ item.supplier or 'N/A' }}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-indian-rupee-sign"></i>
+                                        <span>Cost: ₹{{ "%.2f"|format(item.cost or 0) }}</span>
+                                    </div>
+                                </div>
+                                <div class="alert-item-actions">
+                                    <a href="{{ url_for('mid_sale', item_id=item._id) }}" class="btn-discount">
+                                        <i class="fas fa-tag"></i>
+                                        Mid Sales Discount
+                                    </a>
+                                    <button class="btn-warning" onclick="donateItem('{{ item._id }}')">
+                                        <i class="fas fa-heart"></i>
+                                        Donate
+                                    </button>
+                                    <button class="btn-primary" onclick="reorderItem('{{ item._id }}')">
+                                        <i class="fas fa-shopping-cart"></i>
+                                        Reorder
+                                    </button>
+                                    <button class="btn-secondary" onclick="viewItem('{{ item._id }}')">
+                                        <i class="fas fa-eye"></i>
+                                        View Details
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Warning Items (Expiring in 7 days) -->
+                {% if warning %}
+                <div class="alert-section">
+                    <div class="alert-section-header">
+                        <div class="alert-section-title">
+                            <i class="fas fa-exclamation-triangle warning"></i>
+                            <h2>Warning - Expiring in 7 Days ({{ warning|length }})</h2>
+                        </div>
+                        <div class="alert-section-actions">
+                            <button class="btn-warning" onclick="bulkAction('warning', 'donate')">
+                                <i class="fas fa-heart"></i>
+                                Donate All
+                            </button>
+                            <button class="btn-primary" onclick="bulkAction('warning', 'reorder')">
+                                <i class="fas fa-shopping-cart"></i>
+                                Reorder All
+                            </button>
+                        </div>
+                    </div>
+                    <div class="alert-items">
+                        {% for item in warning %}
+                        <div class="alert-item warning">
+                            <div class="alert-item-header">
+                                <div class="alert-item-info">
+                                    <h3>{{ item.name }}</h3>
+                                    <span class="alert-category">{{ item.category }}</span>
+                                </div>
+                                <div class="alert-item-meta">
+                                    <span class="alert-quantity">{{ item.quantity }} units</span>
+                                    <span class="alert-expiry">Expires {{ item.expiry_date }}</span>
+                                </div>
+                            </div>
+                            <div class="alert-item-content">
+                                <div class="alert-item-details">
+                                    <div class="detail-item">
+                                        <i class="fas fa-box"></i>
+                                        <span>Quantity: {{ item.quantity }}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-calendar"></i>
+                                        <span>Expires: {{ item.expiry_date }}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-truck"></i>
+                                        <span>Supplier: {{ item.supplier or 'N/A' }}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-indian-rupee-sign"></i>
+                                        <span>Cost: ₹{{ "%.2f"|format(item.cost or 0) }}</span>
+                                    </div>
+                                </div>
+                                <div class="alert-item-actions">
+                                    <button class="btn-warning" onclick="donateItem('{{ item._id }}')">
+                                        <i class="fas fa-heart"></i>
+                                        Donate
+                                    </button>
+                                    <button class="btn-primary" onclick="reorderItem('{{ item._id }}')">
+                                        <i class="fas fa-shopping-cart"></i>
+                                        Reorder
+                                    </button>
+                                    <button class="btn-secondary" onclick="viewItem('{{ item._id }}')">
+                                        <i class="fas fa-eye"></i>
+                                        View Details
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- No Alerts State -->
+                {% if not expired and not critical and not warning %}
+                <div class="empty-state">
+                    <i class="fas fa-check-circle"></i>
+                    <h3>All Clear!</h3>
+                    <p>No items are expiring soon. Your inventory is in good shape.</p>
+                    <a href="{{ url_for('inventory') }}" class="btn-primary">
+                        <i class="fas fa-boxes"></i>
+                        View Inventory
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Action Confirmation Modal -->
+    <div class="modal" id="actionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Confirm Action</h3>
+                <button class="modal-close" onclick="closeModal('actionModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="modalMessage">Are you sure you want to perform this action?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal('actionModal')">Cancel</button>
+                <button class="btn-primary" id="modalConfirmBtn" onclick="confirmAction()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script>
+        let currentAction = null;
+        let currentItemId = null;
+
+        // Mark all alerts as read
+        function markAllAsRead() {
+            // In a real app, this would make an API call
+            alert('All alerts marked as read');
+        }
+
+        // Bulk actions
+        function bulkAction(type, action) {
+            const items = getItemsByType(type);
+            if (items.length === 0) return;
+
+            currentAction = { type: 'bulk', action: action, items: items };
+            showModal(
+                `Confirm ${action.charAt(0).toUpperCase() + action.slice(1)}`,
+                `Are you sure you want to ${action} ${items.length} items?`
+            );
+        }
+
+        // Individual item actions
+        function donateItem(itemId) {
+            currentAction = { type: 'single', action: 'donate', itemId: itemId };
+            showModal('Donate Item', 'Are you sure you want to donate this item?');
+        }
+
+        function removeItem(itemId) {
+            currentAction = { type: 'single', action: 'remove', itemId: itemId };
+            showModal('Remove Item', 'Are you sure you want to remove this item from inventory?');
+        }
+
+        function reorderItem(itemId) {
+            currentAction = { type: 'single', action: 'reorder', itemId: itemId };
+            showModal('Reorder Item', 'Are you sure you want to create a reorder for this item?');
+        }
+
+        function viewItem(itemId) {
+            // Redirect to inventory page with item highlighted
+            window.location.href = `/inventory?highlight=${itemId}`;
+        }
+
+        // Get items by type
+        function getItemsByType(type) {
+            // In a real app, this would get actual item IDs from the DOM or API
+            const items = {
+                'expired': {{ expired|map(attribute='_id')|map('string')|list|tojson }},
+                'critical': {{ critical|map(attribute='_id')|map('string')|list|tojson }},
+                'warning': {{ warning|map(attribute='_id')|map('string')|list|tojson }}
+            };
+            return items[type] || [];
+        }
+
+        // Show modal
+        function showModal(title, message) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+            document.getElementById('actionModal').style.display = 'flex';
+        }
+
+        // Close modal
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            currentAction = null;
+        }
+
+        // Confirm action
+        function confirmAction() {
+            if (!currentAction) return;
+
+            const { type, action, itemId, items } = currentAction;
+
+            if (type === 'single') {
+                if (action === 'donate') {
+                    window.location.href = `/donations?item=${itemId}`;
+                } else if (action === 'remove') {
+                    window.location.href = `/inventory/delete/${itemId}`;
+                } else if (action === 'reorder') {
+                    window.location.href = `/orders?reorder=${itemId}`;
+                }
+            } else if (type === 'bulk') {
+                if (action === 'donate') {
+                    const itemIds = items.join(',');
+                    window.location.href = `/donations?items=${itemIds}`;
+                } else if (action === 'reorder') {
+                    const itemIds = items.join(',');
+                    window.location.href = `/orders?reorder=${itemIds}`;
+                } else if (action === 'delete') {
+                    // In a real app, this would make an API call to delete multiple items
+                    alert(`Bulk delete ${items.length} items functionality would be implemented here`);
+                }
+            }
+
+            closeModal('actionModal');
+        }
+
+        // Auto-refresh alerts every 5 minutes
+        setInterval(() => {
+            window.location.reload();
+        }, 300000);
+    </script>
+
+    <style>
+        /* Additional styles for expiry alerts page */
+        .alert-summary {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .alert-count {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            background: var(--light-gray);
+        }
+
+        .alert-count.critical {
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+        }
+
+        .alert-count.warning {
+            background: rgba(230, 126, 34, 0.1);
+            color: var(--alert-orange);
+        }
+
+        .alert-count i {
+            font-size: 1.2rem;
+        }
+
+        .alert-count span {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .alert-count small {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .alert-section {
+            margin-bottom: 2rem;
+        }
+
+        .alert-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--white);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .alert-section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .alert-section-title i {
+            font-size: 1.5rem;
+        }
+
+        .alert-section-title i.critical {
+            color: #e74c3c;
+        }
+
+        .alert-section-title i.warning {
+            color: var(--alert-orange);
+        }
+
+        .alert-section-title h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .alert-section-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .alert-items {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .alert-item {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            border-left: 4px solid;
+        }
+
+        .alert-item.expired {
+            border-left-color: #e74c3c;
+        }
+
+        .alert-item.critical {
+            border-left-color: var(--alert-orange);
+        }
+
+        .alert-item.warning {
+            border-left-color: #f1c40f;
+        }
+
+        .alert-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .alert-item-info h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .alert-category {
+            background: var(--light-gray);
+            color: var(--text-light);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .alert-item-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.25rem;
+        }
+
+        .alert-quantity {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .alert-expiry {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .alert-item-content {
+            padding: 1.5rem;
+        }
+
+        .alert-item-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-light);
+        }
+
+        .detail-item i {
+            width: 16px;
+            color: var(--fresh-green);
+        }
+
+        .alert-item-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-warning {
+            background-color: var(--alert-orange);
+            color: var(--white);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-warning:hover {
+            background-color: #d35400;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+            color: var(--white);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+            transform: translateY(-1px);
+        }
+
+        .btn-discount {
+            background-color: #9b59b6;
+            color: var(--white);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .btn-discount:hover {
+            background-color: #8e44ad;
+            transform: translateY(-1px);
+            color: var(--white);
+            text-decoration: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--fresh-green);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: var(--text-light);
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .alert-section-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .alert-section-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .alert-item-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .alert-item-meta {
+                align-items: flex-start;
+            }
+
+            .alert-item-details {
+                grid-template-columns: 1fr;
+            }
+
+            .alert-item-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</body>
+</html>

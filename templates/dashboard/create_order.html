@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Order - FreshFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-leaf"></i>
+                    <span>FreshFlow</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item"><a href="{{ url_for('dashboard') }}" class="nav-link"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
+                    <li class="nav-item"><a href="{{ url_for('inventory') }}" class="nav-link"><i class="fas fa-boxes"></i><span>Inventory</span></a></li>
+                    <li class="nav-item"><a href="{{ url_for('orders') }}" class="nav-link"><i class="fas fa-shopping-cart"></i><span>Orders</span></a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-nav">
+                <div class="nav-left">
+                    <button class="sidebar-toggle"><i class="fas fa-bars"></i></button>
+                    <h1 class="page-title">Create Order</h1>
+                </div>
+                <div class="nav-right">
+                    <a href="{{ url_for('orders') }}" class="btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+                </div>
+            </header>
+
+            <div class="dashboard-content">
+                <div class="settings-card">
+                    <div class="card-header">
+                        <h3>Order Details</h3>
+                    </div>
+                    <div class="card-content">
+                        <form method="POST" action="{{ url_for('create_order') }}" id="orderForm">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="supplier">Supplier</label>
+                                    <select id="supplier" name="supplier">
+                                        <option value="">Select supplier (optional)</option>
+                                        {% for s in suppliers %}
+                                            <option value="{{ s }}">{{ s }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="table-card" style="margin-top: 1rem;">
+                                <div class="card-header">
+                                    <h3>Add Items</h3>
+                                </div>
+                                <div class="card-content">
+                                    <div class="table-container">
+                                        <table class="data-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Item</th>
+                                                    <th>Category</th>
+                                                    <th>Unit Cost</th>
+                                                    <th>Quantity</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in low_stock_items %}
+                                                <tr>
+                                                    <td>
+                                                        {{ item.name }}
+                                                        <input type="hidden" name="item_id" value="{{ item._id }}">
+                                                    </td>
+                                                    <td>{{ item.category }}</td>
+                                                    <td>₹{{ "%.2f"|format(item.cost or 0) }}</td>
+                                                    <td><input type="number" name="quantity" min="0" value="0" style="width: 90px;"></td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-actions" style="margin-top: 1rem;">
+                                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Submit Order</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
+

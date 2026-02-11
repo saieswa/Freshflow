@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donations - FreshFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-leaf"></i>
+                    <span>FreshFlow</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="{{ url_for('dashboard') }}" class="nav-link">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('inventory') }}" class="nav-link">
+                            <i class="fas fa-boxes"></i>
+                            <span>Inventory</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('expiry_alerts') }}" class="nav-link">
+                            <i class="fas fa-bell"></i>
+                            <span>Expiry Alerts</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('analytics') }}" class="nav-link">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Analytics</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('orders') }}" class="nav-link">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Orders</span>
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="{{ url_for('donations') }}" class="nav-link">
+                            <i class="fas fa-heart"></i>
+                            <span>Donations</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('settings') }}" class="nav-link">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-details">
+                        <span class="user-name">{{ session.username }}</span>
+                        <span class="user-role">Admin</span>
+                    </div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Navigation -->
+            <header class="top-nav">
+                <div class="nav-left">
+                    <button class="sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Donation Management</h1>
+                </div>
+                <div class="nav-right">
+                    <div class="donation-stats">
+                        <div class="stat-item">
+                            <i class="fas fa-heart"></i>
+                            <span>{{ donation_items|length }} items ready</span>
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="createDonation()">
+                        <i class="fas fa-plus"></i>
+                        Create Donation
+                    </button>
+                </div>
+            </header>
+
+            <!-- Donations Content -->
+            <div class="dashboard-content">
+                <!-- Items Ready for Donation -->
+                <div class="donation-card">
+                    <div class="card-header">
+                        <h3>Items Ready for Donation</h3>
+                        <span class="donation-count">{{ donation_items|length }} items available</span>
+                    </div>
+                    <div class="card-content">
+                        {% if donation_items %}
+                        <form id="donationForm" method="POST" action="{{ url_for('create_donation') }}">
+                            <div class="donation-items">
+                                {% for item in donation_items %}
+                                <div class="donation-item">
+                                    <div class="item-checkbox">
+                                        <input type="checkbox" id="item_{{ item._id }}" name="item_ids" value="{{ item._id }}">
+                                        <label for="item_{{ item._id }}"></label>
+                                    </div>
+                                    <div class="item-info">
+                                        <h4>{{ item.name }}</h4>
+                                        <span class="item-category">{{ item.category }}</span>
+                                    </div>
+                                    <div class="item-details">
+                                        <div class="detail">
+                                            <i class="fas fa-box"></i>
+                                            <span>{{ item.quantity }} units</span>
+                                        </div>
+                                        <div class="detail">
+                                            <i class="fas fa-calendar"></i>
+                                            <span>Expires {{ item.expiry_date }}</span>
+                                        </div>
+                                        <div class="detail">
+                                            <i class="fas fa-indian-rupee-sign"></i>
+                                            <span>₹{{ "%.2f"|format(item.cost or 0) }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="item-status">
+                                        <span class="status-badge warning">Expiring Soon</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="donation-actions">
+                                <div class="ngo-selection">
+                                    <label for="ngo_name">Select NGO Partner:</label>
+                                    <select id="ngo_name" name="ngo_name" required>
+                                        <option value="">Choose an NGO partner</option>
+                                        {% for ngo in ngo_partners %}
+                                        <option value="{{ ngo.name }}">{{ ngo.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn-primary large">
+                                    <i class="fas fa-heart"></i>
+                                    Create Donation
+                                </button>
+                            </div>
+                        </form>
+                        {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-heart"></i>
+                            <h3>No Items Available</h3>
+                            <p>No items are currently ready for donation</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- NGO Partners -->
+                <div class="ngo-card">
+                    <div class="card-header">
+                        <h3>NGO Partners</h3>
+                        <button class="btn-secondary" onclick="addNGOPartner()">
+                            <i class="fas fa-plus"></i>
+                            Add Partner
+                        </button>
+                    </div>
+                    <div class="card-content">
+                        <div class="ngo-list">
+                            {% for ngo in ngo_partners %}
+                            <div class="ngo-item">
+                                <div class="ngo-info">
+                                    <h4>{{ ngo.name }}</h4>
+                                    <p>{{ ngo.contact }}</p>
+                                    <span class="ngo-phone">{{ ngo.phone }}</span>
+                                </div>
+                                <div class="ngo-stats">
+                                    <div class="stat">
+                                        <span class="stat-value">24</span>
+                                        <span class="stat-label">Donations</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-value">156</span>
+                                        <span class="stat-label">Items</span>
+                                    </div>
+                                </div>
+                                <div class="ngo-actions">
+                                    <button class="btn-icon" onclick="contactNGO('{{ ngo.name }}')" title="Contact">
+                                        <i class="fas fa-envelope"></i>
+                                    </button>
+                                    <button class="btn-icon" onclick="editNGO('{{ ngo.name }}')" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Donation History -->
+                <div class="history-card">
+                    <div class="card-header">
+                        <h3>Recent Donations</h3>
+                        <a href="#" class="btn-link">View All</a>
+                    </div>
+                    <div class="card-content">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Donation ID</th>
+                                        <th>NGO Partner</th>
+                                        <th>Items</th>
+                                        <th>Value</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>DON001</td>
+                                        <td>Food Bank Foundation</td>
+                                        <td>12</td>
+                                        <td>₹245.50</td>
+                                        <td>2024-01-15</td>
+                                        <td>
+                                            <span class="status-badge success">Completed</span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn-icon" onclick="viewDonation('DON001')" title="View">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn-icon" onclick="downloadReceipt('DON001')" title="Receipt">
+                                                    <i class="fas fa-download"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>DON002</td>
+                                        <td>Community Kitchen</td>
+                                        <td>8</td>
+                                        <td>₹189.20</td>
+                                        <td>2024-01-12</td>
+                                        <td>
+                                            <span class="status-badge warning">Pending</span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn-icon" onclick="viewDonation('DON002')" title="View">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn-icon" onclick="trackDonation('DON002')" title="Track">
+                                                    <i class="fas fa-map-marker-alt"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Impact Statistics -->
+                <div class="impact-grid">
+                    <div class="impact-card">
+                        <div class="impact-icon">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <div class="impact-content">
+                            <div class="impact-value">156</div>
+                            <div class="impact-label">Items Donated</div>
+                            <div class="impact-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                +24 this month
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="impact-card">
+                        <div class="impact-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="impact-content">
+                            <div class="impact-value">₹2,450</div>
+                            <div class="impact-label">Value Donated</div>
+                            <div class="impact-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                +₹450 this month
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="impact-card">
+                        <div class="impact-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="impact-content">
+                            <div class="impact-value">3</div>
+                            <div class="impact-label">NGO Partners</div>
+                            <div class="impact-change neutral">
+                                <i class="fas fa-minus"></i>
+                                No change
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="impact-card">
+                        <div class="impact-icon">
+                            <i class="fas fa-leaf"></i>
+                        </div>
+                        <div class="impact-content">
+                            <div class="impact-value">95%</div>
+                            <div class="impact-label">Waste Reduction</div>
+                            <div class="impact-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                +5% improvement
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script>
+        function createDonation() {
+            const selectedItems = document.querySelectorAll('input[name="item_ids"]:checked');
+            if (selectedItems.length === 0) {
+                alert('Please select at least one item to donate');
+                return;
+            }
+            
+            const ngoName = document.getElementById('ngo_name').value;
+            if (!ngoName) {
+                alert('Please select an NGO partner');
+                return;
+            }
+            
+            // Submit the form
+            document.getElementById('donationForm').submit();
+        }
+
+        function addNGOPartner() {
+            // In a real app, this would open a modal to add a new NGO partner
+            alert('Add NGO partner functionality would be implemented here');
+        }
+
+        function contactNGO(ngoName) {
+            // In a real app, this would open contact options
+            alert(`Contact ${ngoName} functionality would be implemented here`);
+        }
+
+        function editNGO(ngoName) {
+            // In a real app, this would open NGO editing
+            alert(`Edit ${ngoName} functionality would be implemented here`);
+        }
+
+        function viewDonation(donationId) {
+            // In a real app, this would show donation details
+            alert(`View donation ${donationId} functionality would be implemented here`);
+        }
+
+        function downloadReceipt(donationId) {
+            // In a real app, this would generate and download a receipt
+            alert(`Download receipt for ${donationId} functionality would be implemented here`);
+        }
+
+        function trackDonation(donationId) {
+            // In a real app, this would show tracking information
+            alert(`Track donation ${donationId} functionality would be implemented here`);
+        }
+
+        // Select all functionality
+        document.addEventListener('change', function(e) {
+            if (e.target.type === 'checkbox' && e.target.name === 'item_ids') {
+                updateDonationButton();
+            }
+        });
+
+        function updateDonationButton() {
+            const selectedItems = document.querySelectorAll('input[name="item_ids"]:checked');
+            const button = document.querySelector('.donation-actions .btn-primary');
+            
+            if (selectedItems.length > 0) {
+                button.textContent = `Create Donation (${selectedItems.length} items)`;
+                button.disabled = false;
+            } else {
+                button.textContent = 'Create Donation';
+                button.disabled = true;
+            }
+        }
+    </script>
+
+    <style>
+        .donation-stats {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(39, 174, 96, 0.1);
+            color: var(--fresh-green);
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .donation-card {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .donation-count {
+            background: var(--fresh-green);
+            color: var(--white);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .donation-items {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .donation-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 8px;
+            border-left: 4px solid var(--alert-orange);
+        }
+
+        .item-checkbox {
+            position: relative;
+        }
+
+        .item-checkbox input[type="checkbox"] {
+            display: none;
+        }
+
+        .item-checkbox label {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            display: block;
+            position: relative;
+        }
+
+        .item-checkbox input[type="checkbox"]:checked + label {
+            background-color: var(--fresh-green);
+            border-color: var(--fresh-green);
+        }
+
+        .item-checkbox input[type="checkbox"]:checked + label::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--white);
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-info h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .item-category {
+            background: var(--white);
+            color: var(--text-light);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .item-details {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .detail {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .detail i {
+            width: 16px;
+            color: var(--fresh-green);
+        }
+
+        .donation-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--white);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .ngo-selection {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .ngo-selection label {
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .ngo-selection select {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary.large {
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+        }
+
+        .ngo-card {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .ngo-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .ngo-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 8px;
+        }
+
+        .ngo-info h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .ngo-info p {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 0.25rem;
+        }
+
+        .ngo-phone {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .ngo-stats {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .ngo-stats .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .ngo-stats .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .ngo-stats .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .ngo-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .history-card {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .impact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .impact-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .impact-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 1.5rem;
+        }
+
+        .impact-content {
+            flex: 1;
+        }
+
+        .impact-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .impact-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .impact-change {
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .impact-change.positive {
+            color: var(--fresh-green);
+        }
+
+        .impact-change.neutral {
+            color: var(--text-light);
+        }
+
+        @media (max-width: 768px) {
+            .donation-item {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .item-details {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .donation-actions {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+
+            .ngo-item {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .ngo-stats {
+                gap: 1rem;
+            }
+
+            .impact-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</body>
+</html>

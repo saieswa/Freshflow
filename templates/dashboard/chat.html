@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Assistant - FreshFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-leaf"></i>
+                    <span>FreshFlow</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="{{ url_for('dashboard') }}" class="nav-link">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('inventory') }}" class="nav-link">
+                            <i class="fas fa-boxes"></i>
+                            <span>Inventory</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('expiry_alerts') }}" class="nav-link">
+                            <i class="fas fa-bell"></i>
+                            <span>Expiry Alerts</span>
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="{{ url_for('chat') }}" class="nav-link">
+                            <i class="fas fa-robot"></i>
+                            <span>Chat Assistant</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-details">
+                        <span class="user-name">{{ session.username }}</span>
+                        <span class="user-role">Admin</span>
+                    </div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Navigation -->
+            <header class="top-nav">
+                <div class="nav-left">
+                    <button class="sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Chat Assistant</h1>
+                </div>
+                <div class="nav-right">
+                    <a href="{{ url_for('dashboard') }}" class="btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Dashboard
+                    </a>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="dashboard-content">
+                <div class="table-card" style="height: 70vh; display: flex; flex-direction: column;">
+                    <div class="card-header">
+                        <h3>Ask about inventory, discounts, and stock updates</h3>
+                    </div>
+                    <div class="card-content" style="flex: 1; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div id="chat-log" style="flex: 1; overflow-y: auto; padding: 1rem; background: var(--light-gray); border-radius: 8px;">
+                            <div class="assistant-msg" style="margin-bottom: 0.75rem;">
+                                <div style="background: #eef9f1; color: #1f8b4c; padding: 0.75rem 1rem; border-radius: 8px; display: inline-block; max-width: 80%;">
+                                    Hi! I can help with expiring items, discount products, stock levels, and adjusting quantities. Try asking: "Which products are expiring soon?"
+                                </div>
+                            </div>
+                        </div>
+                        <form id="chat-form" onsubmit="return false;" style="display: flex; gap: 0.5rem;">
+                            <input id="chat-input" type="text" placeholder="Type your message..." autocomplete="off" style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                            <button id="chat-send" class="btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-paper-plane"></i>
+                                Send
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const log = document.getElementById('chat-log');
+        const input = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('chat-send');
+
+        function appendUser(text) {
+            const wrap = document.createElement('div');
+            wrap.className = 'user-msg';
+            wrap.style.marginBottom = '0.75rem';
+            wrap.innerHTML = `<div style="background: #e8f0fe; color: #1a73e8; padding: 0.75rem 1rem; border-radius: 8px; display: inline-block; max-width: 80%; float: right; clear: both;">${escapeHtml(text)}</div>`;
+            log.appendChild(wrap);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function appendBot(text) {
+            const wrap = document.createElement('div');
+            wrap.className = 'assistant-msg';
+            wrap.style.marginBottom = '0.75rem';
+            wrap.innerHTML = `<div style="background: #eef9f1; color: #1f8b4c; padding: 0.75rem 1rem; border-radius: 8px; display: inline-block; max-width: 80%;">${formatMultiline(escapeHtml(text))}</div>`;
+            log.appendChild(wrap);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>\"]+/g, function(s) {
+                const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
+                return map[s] || s;
+            });
+        }
+
+        function formatMultiline(str) {
+            return str.replace(/\n/g, '<br>');
+        }
+
+        async function sendMessage() {
+            const text = input.value.trim();
+            if (!text) return;
+            appendUser(text);
+            input.value = '';
+            try {
+                const res = await fetch('{{ url_for('api_chat') }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+                const data = await res.json();
+                appendBot(data.reply || '...');
+            } catch (e) {
+                appendBot('Error sending message.');
+            }
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
+
+

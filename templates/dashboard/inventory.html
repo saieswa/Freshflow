@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory - FreshFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-leaf"></i>
+                    <span>FreshFlow</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="{{ url_for('dashboard') }}" class="nav-link">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="{{ url_for('inventory') }}" class="nav-link">
+                            <i class="fas fa-boxes"></i>
+                            <span>Inventory</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('expiry_alerts') }}" class="nav-link">
+                            <i class="fas fa-bell"></i>
+                            <span>Expiry Alerts</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('analytics') }}" class="nav-link">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Analytics</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('orders') }}" class="nav-link">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Orders</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('donations') }}" class="nav-link">
+                            <i class="fas fa-heart"></i>
+                            <span>Donations</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('settings') }}" class="nav-link">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-details">
+                        <span class="user-name">{{ session.username }}</span>
+                        <span class="user-role">Admin</span>
+                    </div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Navigation -->
+            <header class="top-nav">
+                <div class="nav-left">
+                    <button class="sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Inventory Management</h1>
+                </div>
+                <div class="nav-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search inventory..." id="searchInput">
+                    </div>
+                    <a href="{{ url_for('add_item') }}" class="btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Add Item
+                    </a>
+                </div>
+            </header>
+
+            <!-- Inventory Content -->
+            <div class="dashboard-content">
+                <!-- Filters -->
+                <div class="filters-card">
+                    <div class="filters-header">
+                        <h3>Filters</h3>
+                        <button class="btn-secondary" onclick="clearFilters()">
+                            <i class="fas fa-times"></i>
+                            Clear All
+                        </button>
+                    </div>
+                    <div class="filters-content">
+                        <div class="filter-group">
+                            <label for="categoryFilter">Category</label>
+                            <select id="categoryFilter" onchange="applyFilters()">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                    <option value="{{ category }}">{{ category }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="statusFilter">Status</label>
+                            <select id="statusFilter" onchange="applyFilters()">
+                                <option value="">All Status</option>
+                                <option value="fresh">Fresh</option>
+                                <option value="near_expiry">Near Expiry</option>
+                                <option value="expired">Expired</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="quantityFilter">Quantity</label>
+                            <select id="quantityFilter" onchange="applyFilters()">
+                                <option value="">All Quantities</option>
+                                <option value="low">Low Stock (< 10)</option>
+                                <option value="medium">Medium Stock (10-50)</option>
+                                <option value="high">High Stock (> 50)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventory Table -->
+                <div class="table-card">
+                    <div class="card-header">
+                        <h3>Inventory Items ({{ items|length }} items)</h3>
+                        <div class="card-actions" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <button class="btn-icon" onclick="exportInventory()" title="Export to CSV" style="font-size: 1.2rem; color: #2980b9;">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button class="btn-icon" onclick="openUploadModal()" title="Upload CSV" style="font-size: 1.2rem; color: #27ae60;">
+                                <i class="fas fa-upload"></i>
+                            </button>
+                            <button onclick="openUploadModal()" style="background-color: #27ae60; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; transition: background-color 0.3s;" 
+                                    onmouseover="this.style.backgroundColor='#229954'" 
+                                    onmouseout="this.style.backgroundColor='#27ae60'">
+                                <i class="fas fa-upload"></i>
+                                Upload CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ category }}">
+                                        <i class="fas fa-{% if category == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+                                        {{ message }}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <div class="table-container">
+                            <table class="data-table" id="inventoryTable">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                                        </th>
+                                        <th onclick="sortTable('name')">Item Name <i class="fas fa-sort"></i></th>
+                                        <th onclick="sortTable('category')">Category <i class="fas fa-sort"></i></th>
+                                        <th onclick="sortTable('quantity')">Quantity <i class="fas fa-sort"></i></th>
+                                        <th onclick="sortTable('expiry_date')">Expiry Date <i class="fas fa-sort"></i></th>
+                                        <th onclick="sortTable('supplier')">Supplier <i class="fas fa-sort"></i></th>
+                                        <th onclick="sortTable('cost')">Cost <i class="fas fa-sort"></i></th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in items %}
+                                    <tr data-item-id="{{ item._id }}">
+                                        <td>
+                                            <input type="checkbox" class="item-checkbox" value="{{ item._id }}">
+                                        </td>
+                                        <td>{{ item.name }}</td>
+                                        <td>
+                                            <span class="category-badge">{{ item.category }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="quantity-value {% if item.quantity <= 10 %}low-stock{% endif %}">
+                                                {{ item.quantity }}
+                                            </span>
+                                        </td>
+                                        <td>{{ item.expiry_date }}</td>
+                                        <td>{{ item.supplier or 'N/A' }}</td>
+                                        <td>₹{{ "%.2f"|format(item.cost or 0) }}</td>
+                                        <td>
+                                            {% if item.expiry_date < today %}
+                                                <span class="status-badge expired">Expired</span>
+                                            {% elif item.expiry_date <= next_week %}
+                                                <span class="status-badge warning">Near Expiry</span>
+                                            {% else %}
+                                                <span class="status-badge fresh">Fresh</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <a href="{{ url_for('edit_item', item_id=item._id) }}" class="btn-icon" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button class="btn-icon danger" onclick="deleteItem('{{ item._id }}')" title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {% if not items %}
+                        <div class="empty-state">
+                            <i class="fas fa-boxes"></i>
+                            <h3>No items found</h3>
+                            <p>Start by adding your first inventory item</p>
+                            <a href="{{ url_for('add_item') }}" class="btn-primary">
+                                <i class="fas fa-plus"></i>
+                                Add First Item
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Bulk Actions -->
+                <div class="bulk-actions" id="bulkActions" style="display: none;">
+                    <div class="bulk-actions-content">
+                        <span class="selected-count">0 items selected</span>
+                        <div class="bulk-buttons">
+                            <button class="btn-secondary" onclick="bulkEdit()">
+                                <i class="fas fa-edit"></i>
+                                Edit Selected
+                            </button>
+                            <button class="btn-danger" onclick="bulkDelete()">
+                                <i class="fas fa-trash"></i>
+                                Delete Selected
+                            </button>
+                            <button class="btn-warning" onclick="bulkDonate()">
+                                <i class="fas fa-heart"></i>
+                                Donate Selected
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Delete</h3>
+                <button class="modal-close" onclick="closeModal('deleteModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this item? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
+                <button class="btn-danger" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSV Upload Modal -->
+    <div class="modal" id="uploadModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Upload CSV File</h3>
+                <button class="modal-close" onclick="closeModal('uploadModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-instructions">
+                    <p><strong>CSV Format Requirements:</strong></p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>Required columns: <code>Item Name</code>, <code>Category</code>, <code>Quantity</code>, <code>Expiry Date</code></li>
+                        <li>Optional columns: <code>Supplier</code>, <code>Supplier Cost</code> (or <code>Cost</code>)</li>
+                        <li>Date format: YYYY-MM-DD (e.g., 2024-12-31) or DD/MM/YYYY</li>
+                        <li>Maximum file size: 50MB</li>
+                    </ul>
+                    <p style="margin-top: 15px; font-size: 0.9em; color: #7f8c8d;">
+                        <i class="fas fa-info-circle"></i> Large files (50,000+ rows) will be processed in batches automatically.
+                    </p>
+                </div>
+
+                <form id="csvUploadForm" enctype="multipart/form-data" style="margin-top: 20px;">
+                    <div class="form-group">
+                        <label for="csv_file">Select CSV File:</label>
+                        <input type="file" id="csv_file" name="csv_file" accept=".csv" required 
+                               style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+
+                    <div id="uploadProgress" style="display: none; margin-top: 15px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="flex: 1; background: #ecf0f1; border-radius: 4px; height: 20px; overflow: hidden;">
+                                <div id="progressBar" style="background: #27ae60; height: 100%; width: 0%; transition: width 0.3s;"></div>
+                            </div>
+                            <span id="progressText">0%</span>
+                        </div>
+                        <p id="uploadStatus" style="margin-top: 10px; color: #7f8c8d; font-size: 0.9em;">Processing...</p>
+                    </div>
+
+                    <div id="uploadResults" style="display: none; margin-top: 15px; padding: 10px; border-radius: 4px; background: #f8f9fa;">
+                        <p><strong>Upload Results:</strong></p>
+                        <p id="resultsText"></p>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal('uploadModal')">Cancel</button>
+                <button class="btn-primary" onclick="uploadCSV()" id="uploadBtn">
+                    <i class="fas fa-upload"></i>
+                    Upload & Import
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script>
+        let currentSortColumn = '';
+        let currentSortDirection = 'asc';
+        let selectedItems = new Set();
+        let itemToDelete = null;
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#inventoryTable tbody tr');
+            
+            rows.forEach(row => {
+                const itemName = row.cells[1].textContent.toLowerCase();
+                const category = row.cells[2].textContent.toLowerCase();
+                const supplier = row.cells[5].textContent.toLowerCase();
+                
+                if (itemName.includes(searchTerm) || category.includes(searchTerm) || supplier.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+
+        // Apply filters
+        function applyFilters() {
+            const category = document.getElementById('categoryFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            const quantity = document.getElementById('quantityFilter').value;
+            
+            const url = new URL(window.location);
+            url.searchParams.set('category', category);
+            url.searchParams.set('status', status);
+            url.searchParams.set('quantity', quantity);
+            
+            window.location.href = url.toString();
+        }
+
+        // Clear filters
+        function clearFilters() {
+            document.getElementById('categoryFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('quantityFilter').value = '';
+            applyFilters();
+        }
+
+        // Sort table
+        function sortTable(column) {
+            const table = document.getElementById('inventoryTable');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            const isAsc = currentSortColumn === column && currentSortDirection === 'asc';
+            currentSortDirection = isAsc ? 'desc' : 'asc';
+            currentSortColumn = column;
+            
+            rows.sort((a, b) => {
+                const aValue = a.querySelector(`td:nth-child(${getColumnIndex(column)})`).textContent.trim();
+                const bValue = b.querySelector(`td:nth-child(${getColumnIndex(column)})`).textContent.trim();
+                
+                if (column === 'quantity' || column === 'cost') {
+                    return isAsc ? parseFloat(aValue) - parseFloat(bValue) : parseFloat(bValue) - parseFloat(aValue);
+                } else if (column === 'expiry_date') {
+                    return isAsc ? new Date(aValue) - new Date(bValue) : new Date(bValue) - new Date(aValue);
+                } else {
+                    return isAsc ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+                }
+            });
+            
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        function getColumnIndex(column) {
+            const columns = ['checkbox', 'name', 'category', 'quantity', 'expiry_date', 'supplier', 'cost', 'status', 'actions'];
+            return columns.indexOf(column) + 1;
+        }
+
+        // Select all functionality
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+                if (selectAll.checked) {
+                    selectedItems.add(checkbox.value);
+                } else {
+                    selectedItems.delete(checkbox.value);
+                }
+            });
+            
+            updateBulkActions();
+        }
+
+        // Individual checkbox change
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('item-checkbox')) {
+                if (e.target.checked) {
+                    selectedItems.add(e.target.value);
+                } else {
+                    selectedItems.delete(e.target.value);
+                }
+                updateBulkActions();
+            }
+        });
+
+        // Update bulk actions visibility
+        function updateBulkActions() {
+            const bulkActions = document.getElementById('bulkActions');
+            const selectedCount = document.querySelector('.selected-count');
+            
+            if (selectedItems.size > 0) {
+                bulkActions.style.display = 'block';
+                selectedCount.textContent = `${selectedItems.size} items selected`;
+            } else {
+                bulkActions.style.display = 'none';
+            }
+        }
+
+        // Delete item
+        function deleteItem(itemId) {
+            itemToDelete = itemId;
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+
+        function confirmDelete() {
+            if (itemToDelete) {
+                window.location.href = `/inventory/delete/${itemToDelete}`;
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            if (modalId === 'deleteModal') {
+                itemToDelete = null;
+            } else if (modalId === 'uploadModal') {
+                closeUploadModal();
+            }
+        }
+
+        // Export inventory
+        function exportInventory() {
+            // In a real app, this would generate and download a CSV/Excel file
+            alert('Export functionality would be implemented here');
+        }
+
+        // CSV Upload functionality
+        function openUploadModal() {
+            document.getElementById('uploadModal').style.display = 'flex';
+            resetUploadForm();
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').style.display = 'none';
+            resetUploadForm();
+        }
+
+        function resetUploadForm() {
+            document.getElementById('csvUploadForm').reset();
+            document.getElementById('uploadProgress').style.display = 'none';
+            document.getElementById('uploadResults').style.display = 'none';
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('progressText').textContent = '0%';
+            document.getElementById('uploadBtn').disabled = false;
+        }
+
+        function uploadCSV() {
+            const fileInput = document.getElementById('csv_file');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a CSV file to upload.');
+                return;
+            }
+
+            // Validate file type
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                alert('Please upload a CSV file.');
+                return;
+            }
+
+            // Validate file size (50MB limit)
+            const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+            if (file.size > maxSize) {
+                alert('File size exceeds 50MB limit. Please upload a smaller file.');
+                return;
+            }
+
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('csv_file', file);
+
+            // Show progress
+            document.getElementById('uploadProgress').style.display = 'block';
+            document.getElementById('uploadResults').style.display = 'none';
+            document.getElementById('uploadBtn').disabled = true;
+            
+            // Simulate progress (since we can't track actual upload progress easily)
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress = Math.min(progress + 5, 90);
+                document.getElementById('progressBar').style.width = progress + '%';
+                document.getElementById('progressText').textContent = progress + '%';
+            }, 200);
+
+            // Upload file
+            fetch('/inventory/upload-csv', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                clearInterval(progressInterval);
+                document.getElementById('progressBar').style.width = '100%';
+                document.getElementById('progressText').textContent = '100%';
+
+                if (data.success) {
+                    document.getElementById('uploadStatus').textContent = 'Upload completed!';
+                    document.getElementById('uploadStatus').style.color = '#27ae60';
+                    
+                    // Show results
+                    let resultsHtml = `
+                        <p style="color: #27ae60;"><strong>✓ Success!</strong></p>
+                        <p>Total rows processed: ${data.total_rows}</p>
+                        <p>Successfully imported: ${data.successful_rows} items</p>
+                        ${data.failed_rows > 0 ? `<p style="color: #e67e22;">Failed rows: ${data.failed_rows}</p>` : ''}
+                    `;
+                    
+                    if (data.errors && data.errors.length > 0) {
+                        resultsHtml += '<details style="margin-top: 10px;"><summary style="cursor: pointer; color: #e67e22;">View Errors</summary><ul style="margin-top: 10px; max-height: 200px; overflow-y: auto;">';
+                        data.errors.forEach(error => {
+                            resultsHtml += `<li style="font-size: 0.85em; margin: 5px 0;">${error}</li>`;
+                        });
+                        resultsHtml += '</ul></details>';
+                    }
+                    
+                    document.getElementById('resultsText').innerHTML = resultsHtml;
+                    document.getElementById('uploadResults').style.display = 'block';
+                    
+                    // Reload page after 2 seconds to show new data
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    document.getElementById('uploadStatus').textContent = 'Upload failed!';
+                    document.getElementById('uploadStatus').style.color = '#e74c3c';
+                    
+                    document.getElementById('resultsText').innerHTML = `
+                        <p style="color: #e74c3c;"><strong>✗ Error:</strong> ${data.error || 'Unknown error occurred'}</p>
+                    `;
+                    document.getElementById('uploadResults').style.display = 'block';
+                    document.getElementById('uploadBtn').disabled = false;
+                }
+            })
+            .catch(error => {
+                clearInterval(progressInterval);
+                document.getElementById('progressBar').style.width = '100%';
+                document.getElementById('progressText').textContent = 'Error';
+                document.getElementById('uploadStatus').textContent = 'Upload failed!';
+                document.getElementById('uploadStatus').style.color = '#e74c3c';
+                
+                document.getElementById('resultsText').innerHTML = `
+                    <p style="color: #e74c3c;"><strong>✗ Error:</strong> ${error.message || 'Network error occurred. Please try again.'}</p>
+                `;
+                document.getElementById('uploadResults').style.display = 'block';
+                document.getElementById('uploadBtn').disabled = false;
+            });
+        }
+
+        // Bulk actions
+        function bulkEdit() {
+            if (selectedItems.size === 0) return;
+            alert(`Edit ${selectedItems.size} items functionality would be implemented here`);
+        }
+
+        function bulkDelete() {
+            if (selectedItems.size === 0) return;
+            if (confirm(`Are you sure you want to delete ${selectedItems.size} items?`)) {
+                // In a real app, this would make an API call to delete multiple items
+                alert('Bulk delete functionality would be implemented here');
+            }
+        }
+
+        function bulkDonate() {
+            if (selectedItems.size === 0) return;
+            // Redirect to donations page with selected items
+            const itemIds = Array.from(selectedItems).join(',');
+            window.location.href = `/donations?items=${itemIds}`;
+        }
+    </script>
+</body>
+</html>
