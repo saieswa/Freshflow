@@ -1163,25 +1163,27 @@ def remove_item(item_id):
 
 # Initialize default admin user and run app
 if __name__ == '__main__':
-    if not db.users.find_one({'username': 'admin'}):
-        default_pwd = bcrypt.hashpw('admin123'.encode(), bcrypt.gensalt())
-        db.users.insert_one({
-            'username': 'admin',
-            'email': 'admin@freshflow.com',
-            'password': default_pwd,
-            'role': 'Admin'
-        })
-    
-    # Add sample inventory data
-    if db.inventory.count_documents({}) == 0:
-        sample_items = [
-            {'name': 'Fresh Milk', 'category': 'Dairy', 'quantity': 25, 'expiry_date': '2024-01-20', 'supplier': 'Dairy Direct', 'cost': 2.50},
-            {'name': 'Bananas', 'category': 'Fruits', 'quantity': 50, 'expiry_date': '2024-01-18', 'supplier': 'Fresh Foods', 'cost': 1.20},
-            {'name': 'Bread', 'category': 'Grains', 'quantity': 15, 'expiry_date': '2024-01-16', 'supplier': 'Bakery Co', 'cost': 3.00},
-            {'name': 'Chicken Breast', 'category': 'Meat', 'quantity': 30, 'expiry_date': '2024-01-22', 'supplier': 'Meat Market', 'cost': 8.50},
-            {'name': 'Apples', 'category': 'Fruits', 'quantity': 40, 'expiry_date': '2024-01-25', 'supplier': 'Fresh Foods', 'cost': 2.00}
-        ]
-        db.inventory.insert_many(sample_items)
+    if db is not None:
+        if not db.users.find_one({'username': 'admin'}):
+            default_pwd = bcrypt.hashpw('admin123'.encode(), bcrypt.gensalt())
+            db.users.insert_one({
+                'username': 'admin',
+                'email': 'admin@freshflow.com',
+                'password': default_pwd,
+                'role': 'Admin'
+            })
+        
+        # Add sample inventory data
+        if db.inventory.count_documents({}) == 0:
+            sample_items = [
+                {'name': 'Fresh Milk', 'category': 'Dairy', 'quantity': 25, 'expiry_date': '2024-01-20', 'supplier': 'Dairy Direct', 'cost': 2.50},
+                {'name': 'Bananas', 'category': 'Fruits', 'quantity': 50, 'expiry_date': '2024-01-18', 'supplier': 'Fresh Foods', 'cost': 1.20},
+                {'name': 'Bread', 'category': 'Grains', 'quantity': 15, 'expiry_date': '2024-01-16', 'supplier': 'Bakery Co', 'cost': 3.00},
+                {'name': 'Chicken Breast', 'category': 'Meat', 'quantity': 30, 'expiry_date': '2024-01-22', 'supplier': 'Meat Market', 'cost': 8.50},
+                {'name': 'Apples', 'category': 'Fruits', 'quantity': 40, 'expiry_date': '2024-01-25', 'supplier': 'Fresh Foods', 'cost': 2.00}
+            ]
+            db.inventory.insert_many(sample_items)
     
     print("Starting FreshFlow...")
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
