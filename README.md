@@ -7,8 +7,7 @@ A modern, dashboard-driven web application for tracking inventory freshness, red
 ## 🌐 Live Cloud Deployment
 
 🚀 **Web Service (Cloud Hosted):**
-👉 https://your-render-url.onrender.com
-
+👉https://freshflow-inventory.onrender.com
 > The application is deployed on cloud infrastructure using Render (free tier), enabling remote access, scalability, and real-time usage without local setup.
 
 ---
