@@ -23,44 +23,189 @@ FreshFlow is integrated with cloud computing for better scalability and accessib
 
 > Note: The application backend runs on cloud servers, removing dependency on local machines.
 
----
-## 🚀 Project Preview
 
-### 🏠 Home Page
+---
+
+# 🚀 Project Preview
+
+## 🏠 Home Page
+
 <p align="center">
   <img src="Screenshot/Picture1.png" width="900"/>
 </p>
 
----
-
-### 📊 Dashboard
 <p align="center">
   <img src="Screenshot/Picture2.png" width="900"/>
 </p>
 
----
-
-### 🔐 Login Page
 <p align="center">
   <img src="Screenshot/Picture3.png" width="900"/>
 </p>
 
----
-
-### 📈 Analytics Page
 <p align="center">
   <img src="Screenshot/Picture4.png" width="900"/>
 </p>
 
 ---
 
-### ⚙️ Admin Panel
+## 👤 Create Account
+
 <p align="center">
   <img src="Screenshot/Picture5.png" width="900"/>
 </p>
 
 ---
 
+## 🔐 Sign In
+
+<p align="center">
+  <img src="Screenshot/Picture7.png" width="900"/>
+</p>
+
+---
+
+## 📊 Dashboard
+
+<p align="center">
+  <img src="Screenshot/Picture8.png" width="900"/>
+</p>
+
+<p align="center">
+  <img src="Screenshot/Picture9.png" width="900"/>
+</p>
+
+<p align="center">
+  <img src="Screenshot/Picture10.png" width="900"/>
+</p>
+
+---
+
+## 🎯 Smart Discount Recommendations
+
+<p align="center">
+  <img src="Screenshot/Picture11.png" width="900"/>
+</p>
+
+---
+
+## 💰 Mid Sales Discount
+
+<p align="center">
+  <img src="Screenshot/Picture12.png" width="900"/>
+</p>
+
+<p align="center">
+  <img src="Screenshot/Picture13.png" width="900"/>
+</p>
+
+---
+
+## 📦 Discount Products List
+
+<p align="center">
+  <img src="Screenshot/Picture14.png" width="900"/>
+</p>
+
+---
+
+## 📋 Inventory Management
+
+<p align="center">
+  <img src="Screenshot/Picture15.png" width="900"/>
+</p>
+
+---
+
+## 📁 CSV File Upload
+
+<p align="center">
+  <img src="Screenshot/Picture16.png" width="900"/>
+</p>
+
+---
+
+## ⚠️ Expiry Alerts
+
+<p align="center">
+  <img src="Screenshot/Picture17.png" width="900"/>
+</p>
+
+<p align="center">
+  <img src="Screenshot/Picture18.png" width="900"/>
+</p>
+
+<p align="center">
+  <img src="Screenshot/Picture19.png" width="900"/>
+</p>
+
+---
+
+## 📈 Analytics & Reports
+
+<p align="center">
+  <img src="Screenshot/Picture20.png" width="900"/>
+</p>
+
+<p align="center">
+  <img src="Screenshot/Picture21.png" width="900"/>
+</p>
+
+<p align="center">
+  <img src="Screenshot/Picture22.png" width="900"/>
+</p>
+
+---
+
+## 🛒 Orders & Reorders
+
+<p align="center">
+  <img src="Screenshot/Picture23.png" width="900"/>
+</p>
+
+<p align="center">
+  <img src="Screenshot/Picture24.png" width="900"/>
+</p>
+
+---
+
+## ❤️ Donations
+
+<p align="center">
+  <img src="Screenshot/Picture25.png" width="900"/>
+</p>
+
+<p align="center">
+  <img src="Screenshot/Picture26.png" width="900"/>
+</p>
+
+<p align="center">
+  <img src="Screenshot/Picture27.png" width="900"/>
+</p>
+
+---
+
+## ⚙️ Settings
+
+<p align="center">
+  <img src="Screenshot/Picture28.png" width="900"/>
+</p>
+
+<p align="center">
+  <img src="Screenshot/Picture29.png" width="900"/>
+</p>
+
+<p align="center">
+  <img src="Screenshot/Picture30.png" width="900"/>
+</p>
+
+<p align="center">
+  <img src="Screenshot/Picture31.png" width="900"/>
+</p>
+
+---
+
+
+---
 ## Features
 
 * **Smart Inventory Tracking**: Real-time monitoring of stock levels with automated expiry date tracking
