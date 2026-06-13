@@ -24,6 +24,42 @@ FreshFlow is integrated with cloud computing for better scalability and accessib
 > Note: The application backend runs on cloud servers, removing dependency on local machines.
 
 ---
+## 🚀 Project Preview
+
+### 🏠 Home Page
+<p align="center">
+  <img src="Screenshot/Picture1.png" width="900"/>
+</p>
+
+---
+
+### 📊 Dashboard
+<p align="center">
+  <img src="Screenshot/Picture2.png" width="900"/>
+</p>
+
+---
+
+### 🔐 Login Page
+<p align="center">
+  <img src="Screenshot/Picture3.png" width="900"/>
+</p>
+
+---
+
+### 📈 Analytics Page
+<p align="center">
+  <img src="Screenshot/Picture4.png" width="900"/>
+</p>
+
+---
+
+### ⚙️ Admin Panel
+<p align="center">
+  <img src="Screenshot/Picture5.png" width="900"/>
+</p>
+
+---
 
 ## Features
 
